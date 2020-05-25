@@ -1,0 +1,5 @@
+ - GradlePublish - 
+   https://git.dorkbox.com/dorkbox/GradlePublish
+   Copyright 2020 - The Apache Software License, Version 2.0
+     Dorkbox LLC
+   Gradle Plugin to publish projects to the sonatype repository
