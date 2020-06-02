@@ -29,7 +29,7 @@ plugins {
 
     id("com.dorkbox.Licensing") version "1.3"
     id("com.dorkbox.VersionUpdate") version "1.6.1"
-    id("com.dorkbox.GradleUtils") version "1.5"
+    id("com.dorkbox.GradleUtils") version "1.6"
 
     kotlin("jvm") version "1.3.72"
 }
@@ -38,7 +38,7 @@ object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.0"
+    const val version = "1.1"
 
     // set as project.ext
     const val name = "Gradle Publish"

@@ -37,6 +37,14 @@ import org.gradle.jvm.tasks.Jar
  */
 @Suppress("UnstableApiUsage", "unused")
 class PublishPlugin : Plugin<Project> {
+    companion object {
+        init {
+            // To fix maven+gradle moronic incompatibilities: https://github.com/gradle/gradle/issues/11308
+            System.setProperty("org.gradle.internal.publish.checksums.insecure", "true")
+        }
+    }
+
+
     private lateinit var project: Project
 
     override fun apply(project: Project) {
@@ -97,9 +105,13 @@ class PublishPlugin : Plugin<Project> {
 
         project.tasks.getByName("closeAndReleaseRepository").mustRunAfter(project.tasks.getByName("publishToSonatype"))
         project.tasks.create("publishToSonatypeAndRelease", PublishAndReleaseProjectTask::class.java).apply {
-            group = "publishing"
+            group = "publish and release"
 
             dependsOn("publishToSonatype", "closeAndReleaseRepository")
+        }
+
+        project.tasks.getByName("publishToMavenLocal").apply {
+            group = "publish and release"
         }
 
 
