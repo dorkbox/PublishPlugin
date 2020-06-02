@@ -18,7 +18,6 @@ package dorkbox.gradlePublish
 import de.marcphilipp.gradle.nexus.NexusPublishExtension
 import de.marcphilipp.gradle.nexus.NexusRepository
 import de.marcphilipp.gradle.nexus.NexusRepositoryContainer
-import dorkbox.gradle.sourceSets
 import io.codearte.gradle.nexus.NexusStagingExtension
 import org.gradle.api.Action
 import org.gradle.api.DomainObjectCollection
@@ -28,7 +27,9 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.tasks.SourceSet
 import org.gradle.jvm.tasks.Jar
+import java.util.*
 
 
 /**
@@ -92,7 +93,8 @@ class PublishPlugin : Plugin<Project> {
                 mavPub.artifact(project.tasks.create("sourceJar", Jar::class.java).apply {
                     description = "Creates a JAR that contains the source code."
 
-                    from(project.sourceSets["main"]?.java)
+                    val sourceSets = project.extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
+                    from(sourceSets.getByName("main").java)
                     archiveClassifier.set("sources")
                 })
 

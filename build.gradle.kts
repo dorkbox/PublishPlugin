@@ -95,7 +95,7 @@ dependencies {
 
 
     // for gradle kotlin extensions
-    implementation("gradle.plugin.com.dorkbox:GradleUtils:1.5")
+    api("gradle.plugin.com.dorkbox:GradleUtils:1.6")
 
 
     // publish on sonatype
