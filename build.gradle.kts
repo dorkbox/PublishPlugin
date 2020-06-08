@@ -19,8 +19,6 @@ import java.time.Instant
 gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS_FULL   // always show the stacktrace!
 gradle.startParameter.warningMode = WarningMode.All
 
-println("Gradle ${project.gradle.gradleVersion}")
-
 plugins {
     java
     `java-gradle-plugin`
@@ -29,7 +27,7 @@ plugins {
 
     id("com.dorkbox.Licensing") version "1.3"
     id("com.dorkbox.VersionUpdate") version "1.6.1"
-    id("com.dorkbox.GradleUtils") version "1.6"
+    id("com.dorkbox.GradleUtils") version "1.8"
 
     kotlin("jvm") version "1.3.72"
 }
@@ -38,7 +36,7 @@ object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.1"
+    const val version = "1.2"
 
     // set as project.ext
     const val name = "Gradle Publish"
@@ -56,9 +54,7 @@ object Extras {
 /////  assign 'Extras'
 ///////////////////////////////
 GradleUtils.load("$projectDir/../../gradle.properties", Extras)
-description = Extras.description
-group = Extras.group
-version = Extras.version
+GradleUtils.fixIntellijPaths()
 
 
 licensing {

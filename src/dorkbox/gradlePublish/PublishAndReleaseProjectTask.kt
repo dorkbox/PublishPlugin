@@ -31,8 +31,4 @@ PublishAndReleaseProjectTask : DefaultTask() {
     @TaskAction
     fun run() {
     }
-
-    override fun getRequiredServices(): MutableSet<Provider<out BuildService<*>>> {
-        TODO("Not yet implemented")
-    }
 }

@@ -20,9 +20,11 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Input
+import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
+import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
 import java.io.File
-import java.util.function.Consumer
+import java.time.Duration
 
 class IssueManagement() {
     @get:Input
@@ -49,6 +51,25 @@ class PrivateKey {
 }
 
 open class PublishToSonatype(val project: Project) {
+
+    /**
+     * How long the HTTP client will wait before timing out
+     */
+    @get:Input
+    var httpTimeout = Duration.ofMinutes(5)
+
+    /**
+     * How many retries to attempt when publishing/releasing to sonatype
+     */
+    @get:Input
+    var retryLimit = 100
+
+    /**
+     * How long between retries to wait when publishing/releasing to sonatype
+     */
+    @get:Input
+    var retryDelay = Duration.ofSeconds(5)
+
     @get:Input
     var groupId = ""
         set(value) {
@@ -144,7 +165,6 @@ open class PublishToSonatype(val project: Project) {
             val sign = project.extensions.getByName("signing") as SigningExtension
             sign.apply {
                 useInMemoryPgpKeys(File(key.fileName).readText(), key.password)
-                sign((project.extensions.getByName("publishing") as PublishingExtension).publications.getByName("maven"))
             }
         }
     }
