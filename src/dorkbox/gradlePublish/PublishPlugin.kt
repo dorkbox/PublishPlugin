@@ -189,7 +189,7 @@ class PublishPlugin : Plugin<Project> {
             }
 
             project.tasks.findByName("publishToSonatype")?.doFirst {
-                println("\tPublishing to Sonatype: ${config.groupId}:${config.version}/")
+                println("\tPublishing to Sonatype: ${config.groupId}:${config.version}")
             }
 
             val closeTask = project.tasks.findByName("closeRepository") as CloseRepositoryTask
