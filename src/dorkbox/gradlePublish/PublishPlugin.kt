@@ -192,10 +192,6 @@ class PublishPlugin : Plugin<Project> {
                 assignFromProp("sonatypePassword", config.sonatype.password) { password = it }
             }
 
-            project.tasks.findByName("publishToSonatype")?.doFirst {
-                println("\tPublishing to Sonatype: ${config.groupId}:${config.version}")
-            }
-
             val closeTask = project.tasks.findByName("closeRepository") as CloseRepositoryTask
             closeTask.apply {
                 delayBetweenRetriesInMillis = config.retryDelay.toMillis().toInt()
@@ -225,7 +221,7 @@ class PublishPlugin : Plugin<Project> {
                     .replace("(\\d[HMS])(?!$)", "$1 ").toLowerCase()
 
             project.tasks.findByName("publishToSonatype")?.doFirst {
-                println("\tPublishing to Sonatype: ${config.groupId}:${config.version}")
+                println("\tPublishing to Sonatype: ${config.groupId}:${config.artifactId}:${config.version}")
                 println("\t\tSonatype HTTP timeout: $durationString")
                 println("\t\tSonatype API timeout: $fullReleaseString")
             }
