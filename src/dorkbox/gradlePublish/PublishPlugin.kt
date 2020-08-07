@@ -153,6 +153,10 @@ class PublishPlugin : Plugin<Project> {
 
 
         project.tasks.withType<PublishToMavenLocal> {
+            doFirst {
+                println("\tPublishing '${publication.groupId}:${publication.artifactId}:${publication.version}' to Maven Local")
+            }
+
             onlyIf {
                 val pub = get()
                 publication == pub.publications.getByName("maven")
@@ -220,9 +224,11 @@ class PublishPlugin : Plugin<Project> {
             val fullReleaseString = fullReleaseTimeout.toString().substring(2)
                     .replace("(\\d[HMS])(?!$)", "$1 ").toLowerCase()
 
-            println("\tMaven publish and release plugin initialized")
-            println("\t- Sonatype HTTP timeout: $durationString")
-            println("\t- Sonatype API timeout: $fullReleaseString")
+            project.tasks.findByName("publishToSonatype")?.doFirst {
+                println("\tPublishing to Sonatype: ${config.groupId}:${config.version}")
+                println("\t\tSonatype HTTP timeout: $durationString")
+                println("\t\tSonatype API timeout: $fullReleaseString")
+            }
         }
 
         project.childProjects.values.forEach {
