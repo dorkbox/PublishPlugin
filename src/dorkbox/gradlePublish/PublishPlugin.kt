@@ -165,7 +165,11 @@ class PublishPlugin : Plugin<Project> {
 
         project.tasks.withType<PublishToMavenRepository> {
              doFirst {
-                 println("\tPublishing '${publication.groupId}:${publication.artifactId}:${publication.version}' to ${repository.url}")
+                 val url = "https://oss.sonatype.org/content/repositories/releases/"
+                 val projectName = config.groupId.replace('.', '/')
+
+                 // output the release URL in the console
+                 println("\tPublishing '${publication.groupId}:${publication.artifactId}:${publication.version}' to $url$projectName/${config.name}/${config.version}/")
              }
 
             onlyIf {
@@ -179,14 +183,6 @@ class PublishPlugin : Plugin<Project> {
         // have to get the configuration extension data
         // required to make sure the tasks run in the correct order
         project.afterEvaluate {
-            // output the release URL in the console
-            project.tasks.getByName("releaseRepository").doLast {
-                val url = "https://oss.sonatype.org/content/repositories/releases/"
-                val projectName = config.groupId.replace('.', '/')
-
-                println("\tMaven URL: $url$projectName/${config.name}/${config.version}/")
-            }
-
             nexusStaging {
                 assignFromProp("sonatypeUserName", config.sonatype.userName) { username = it }
                 assignFromProp("sonatypePassword", config.sonatype.password) { password = it }
