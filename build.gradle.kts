@@ -27,7 +27,7 @@ plugins {
 
     id("com.dorkbox.Licensing") version "2.2"
     id("com.dorkbox.VersionUpdate") version "2.0"
-    id("com.dorkbox.GradleUtils") version "1.8.12"
+    id("com.dorkbox.GradleUtils") version "1.10"
 
     kotlin("jvm") version "1.3.72"
 }
@@ -36,7 +36,7 @@ object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.4"
+    const val version = "1.5"
 
     // set as project.ext
     const val name = "Gradle Publish"
@@ -45,9 +45,6 @@ object Extras {
     const val url = "https://git.dorkbox.com/dorkbox/GradlePublish"
     val tags = listOf("gradle", "sonatype", "publish", "maven")
     val buildDate = Instant.now().toString()
-
-    val JAVA_VERSION = JavaVersion.VERSION_1_8
-    val KOTLIN_VERSION = JavaVersion.VERSION_1_8
 }
 
 ///////////////////////////////
@@ -55,7 +52,8 @@ object Extras {
 ///////////////////////////////
 GradleUtils.load("$projectDir/../../gradle.properties", Extras)
 GradleUtils.fixIntellijPaths()
-
+GradleUtils.defaultResolutionStrategy()
+GradleUtils.compileConfiguration(JavaVersion.VERSION_1_8)
 
 licensing {
     license(License.APACHE_2) {
@@ -90,10 +88,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
 
-    // for gradle kotlin extensions
-    api("gradle.plugin.com.dorkbox:GradleUtils:1.6")
-
-
     // publish on sonatype
     // https://plugins.gradle.org/plugin/de.marcphilipp.nexus-publish
     implementation("de.marcphilipp.gradle:nexus-publish-plugin:0.4.0")
@@ -101,24 +95,6 @@ dependencies {
     // close and release on sonatype
     // https://plugins.gradle.org/plugin/io.codearte.nexus-staging
     implementation("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2")
-}
-
-java {
-    sourceCompatibility = Extras.JAVA_VERSION
-    targetCompatibility = Extras.JAVA_VERSION
-}
-
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    options.isIncremental = true
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = Extras.KOTLIN_VERSION.toString()
-}
-
-tasks.withType<Jar> {
-    duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 
 tasks.jar.get().apply {

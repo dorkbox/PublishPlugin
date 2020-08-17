@@ -29,13 +29,15 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import java.io.File
 import java.time.Duration
 import java.util.*
-import java.util.function.BiFunction
 
 
 /**
@@ -127,14 +129,12 @@ class PublishPlugin : Plugin<Project> {
 
                 mavPub.artifact(project.tasks.create("sourceJar", Jar::class.java).apply {
                     description = "Creates a JAR that contains the source code."
-
-                    val sourceSets = project.extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
-                    from(sourceSets.getByName("main").java)
                     archiveClassifier.set("sources")
                 })
 
                 mavPub.artifact(project.tasks.create("javaDocJar", Jar::class.java).apply {
                     description = "Creates a JAR that contains the javadocs."
+                    // nothing special about javadocs. sources is all we care about
                     archiveClassifier.set("javadoc")
                 })
             }
@@ -207,6 +207,46 @@ class PublishPlugin : Plugin<Project> {
             }
 
 
+            // fix the maven source jar
+            val sourceJarTask = project.tasks.findByName("sourceJar") as Jar
+            sourceJarTask.apply {
+                val sourceSets = project.extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
+                val mainSourceSet: SourceSet = sourceSets.getByName("main")
+
+                // want to included java + kotlin for the sources
+
+                // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin sourcesets have BOTH java + kotlin.
+                // we want to make sure to NOT have both, as it will screw up creating the jar!
+                val kotlin = (mainSourceSet as org.gradle.api.internal.HasConvention)
+                    .convention
+                    .getPlugin(KotlinSourceSet::class.java)
+                    .kotlin
+
+                val srcDirs = kotlin.srcDirs
+                val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
+                    // find out if this file (usually, just a java file) is ALSO in the java sourceset.
+                    // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
+                    val javaFiles = mainSourceSet.java.files.map { file ->
+                        // by definition, it MUST be one of these
+                        val base = srcDirs.first {
+                            // find out WHICH src dir base path it is
+                            val path = project.buildDir.relativeTo(it)
+                            path.path.isNotEmpty()
+                        }
+                        file.relativeTo(base).path
+                    }
+
+                    it.setExcludes(javaFiles)
+                }
+
+                from(kotlinFiles)
+
+                // java stuff (it is compiled AFTER kotlin).
+                // kotlin is always compiled first
+                from(mainSourceSet.java)
+            }
+
+
             // output how much the time-outs are
             val durationString = config.httpTimeout.toString().substring(2)
                     .replace("(\\d[HMS])(?!$)", "$1 ").toLowerCase()
@@ -258,7 +298,7 @@ class PublishPlugin : Plugin<Project> {
             project.extensions.configure("nexusPublishing", configure)
 
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "RemoveExplicitTypeArguments")
     private fun assignFromProp(propertyName: String, defaultValue: String, apply: (value: String)->Unit) {
         // THREE possibilities for property registration or assignment
         // 1) we have MANUALLY defined this property (via the configuration object)
@@ -283,7 +323,7 @@ class PublishPlugin : Plugin<Project> {
         }
 
         // 3
-        var loaderFunctions: ArrayList<Plugin<Pair<String, String>>>? = null
+        val loaderFunctions: ArrayList<Plugin<Pair<String, String>>>?
         if (project.extensions.extraProperties.has("property_loader_functions")) {
             loaderFunctions = project.extensions.extraProperties["property_loader_functions"] as ArrayList<Plugin<Pair<String,String>>>?
         } else {
