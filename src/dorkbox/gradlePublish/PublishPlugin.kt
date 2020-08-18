@@ -217,29 +217,33 @@ class PublishPlugin : Plugin<Project> {
 
                 // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin sourcesets have BOTH java + kotlin.
                 // we want to make sure to NOT have both, as it will screw up creating the jar!
-                val kotlin = (mainSourceSet as org.gradle.api.internal.HasConvention)
-                    .convention
-                    .getPlugin(KotlinSourceSet::class.java)
-                    .kotlin
+                try {
+                    val kotlin = (mainSourceSet as org.gradle.api.internal.HasConvention)
+                        .convention
+                        .getPlugin(KotlinSourceSet::class.java)
+                        .kotlin
 
-                val srcDirs = kotlin.srcDirs
-                val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
-                    // find out if this file (usually, just a java file) is ALSO in the java sourceset.
-                    // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
-                    val javaFiles = mainSourceSet.java.files.map { file ->
-                        // by definition, it MUST be one of these
-                        val base = srcDirs.first {
-                            // find out WHICH src dir base path it is
-                            val path = project.buildDir.relativeTo(it)
-                            path.path.isNotEmpty()
+                    val srcDirs = kotlin.srcDirs
+                    val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
+                        // find out if this file (usually, just a java file) is ALSO in the java sourceset.
+                        // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
+                        val javaFiles = mainSourceSet.java.files.map { file ->
+                            // by definition, it MUST be one of these
+                            val base = srcDirs.first {
+                                // find out WHICH src dir base path it is
+                                val path = project.buildDir.relativeTo(it)
+                                path.path.isNotEmpty()
+                            }
+                            file.relativeTo(base).path
                         }
-                        file.relativeTo(base).path
+
+                        it.setExcludes(javaFiles)
                     }
 
-                    it.setExcludes(javaFiles)
+                    from(kotlinFiles)
+                } catch (ignored: Exception) {
+                    // maybe we don't have kotlin for the project
                 }
-
-                from(kotlinFiles)
 
                 // java stuff (it is compiled AFTER kotlin).
                 // kotlin is always compiled first
