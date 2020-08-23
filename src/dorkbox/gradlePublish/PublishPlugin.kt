@@ -245,9 +245,9 @@ class PublishPlugin : Plugin<Project> {
                     // maybe we don't have kotlin for the project
                 }
 
-                // java stuff (it is compiled AFTER kotlin).
+                // java stuff (it is compiled AFTER kotlin), and it is ALREADY included!
                 // kotlin is always compiled first
-                from(mainSourceSet.java)
+                // from(mainSourceSet.java)
             }
 
 
