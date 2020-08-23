@@ -25,7 +25,7 @@ plugins {
 
     id("com.gradle.plugin-publish") version "0.12.0"
 
-    id("com.dorkbox.Licensing") version "2.2"
+    id("com.dorkbox.Licensing") version "2.3"
     id("com.dorkbox.VersionUpdate") version "2.0"
     id("com.dorkbox.GradleUtils") version "1.10"
 
@@ -36,7 +36,7 @@ object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.6"
+    const val version = "1.7"
 
     // set as project.ext
     const val name = "Gradle Publish"
