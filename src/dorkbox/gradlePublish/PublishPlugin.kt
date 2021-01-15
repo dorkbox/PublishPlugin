@@ -144,7 +144,7 @@ class PublishPlugin : Plugin<Project> {
         project.tasks.create("publishToSonatypeAndRelease", PublishAndReleaseProjectTask::class.java).apply {
             group = "publish and release"
 
-            dependsOn("publishToSonatype", "closeAndReleaseRepository")
+            dependsOn("publishToMavenLocal", "publishToSonatype", "closeAndReleaseRepository")
         }
 
         project.tasks.getByName("publishToMavenLocal").apply {
