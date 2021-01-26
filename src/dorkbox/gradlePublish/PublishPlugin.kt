@@ -140,16 +140,19 @@ class PublishPlugin : Plugin<Project> {
             }
         }
 
-        project.tasks.getByName("closeAndReleaseRepository").mustRunAfter(project.tasks.getByName("publishToSonatype"))
+        project.tasks.getByName("publishToMavenLocal").apply {
+            group = "publish and release"
+        }
+
         project.tasks.create("publishToSonatypeAndRelease", PublishAndReleaseProjectTask::class.java).apply {
             group = "publish and release"
 
             dependsOn("publishToMavenLocal", "publishToSonatype", "closeAndReleaseRepository")
         }
 
-        project.tasks.getByName("publishToMavenLocal").apply {
-            group = "publish and release"
-        }
+        // (when the dependencies are there) we want to ALWAYS run maven local FIRST.
+        project.tasks.getByName("publishToSonatype").mustRunAfter(project.tasks.getByName("publishToMavenLocal"))
+        project.tasks.getByName("closeAndReleaseRepository").mustRunAfter(project.tasks.getByName("publishToSonatype"))
 
 
         project.tasks.withType<PublishToMavenLocal> {
