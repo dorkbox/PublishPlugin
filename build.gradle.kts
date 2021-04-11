@@ -22,20 +22,20 @@ plugins {
     java
     `java-gradle-plugin`
 
-    id("com.gradle.plugin-publish") version "0.12.0"
+    id("com.gradle.plugin-publish") version "0.14.0"
 
-    id("com.dorkbox.Licensing") version "2.5.2"
-    id("com.dorkbox.VersionUpdate") version "2.1"
-    id("com.dorkbox.GradleUtils") version "1.12"
+    id("com.dorkbox.Licensing") version "2.5.5"
+    id("com.dorkbox.VersionUpdate") version "2.3"
+    id("com.dorkbox.GradleUtils") version "2.1"
 
-    kotlin("jvm") version "1.4.21-2"
+    kotlin("jvm") version "1.4.32"
 }
 
 object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.10"
+    const val version = "1.11"
 
     // set as project.ext
     const val name = "Gradle Publish"
@@ -92,7 +92,7 @@ dependencies {
 
     // close and release on sonatype
     // https://plugins.gradle.org/plugin/io.codearte.nexus-staging
-    implementation("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.22.0")
+    implementation("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0")
 }
 
 tasks.jar.get().apply {
