@@ -256,12 +256,12 @@ class PublishPlugin : Plugin<Project> {
 
             // output how much the time-outs are
             val durationString = config.httpTimeout.toString().substring(2)
-                    .replace("(\\d[HMS])(?!$)", "$1 ").toLowerCase()
+                    .replace("(\\d[HMS])(?!$)", "$1 ").lowercase(Locale.getDefault())
 
 
             val fullReleaseTimeout = Duration.ofMillis(config.retryDelay.toMillis() * config.retryLimit)
             val fullReleaseString = fullReleaseTimeout.toString().substring(2)
-                    .replace("(\\d[HMS])(?!$)", "$1 ").toLowerCase()
+                    .replace("(\\d[HMS])(?!$)", "$1 ").lowercase(Locale.getDefault())
 
             project.tasks.findByName("publishToSonatype")?.doFirst {
                 println("\tPublishing to Sonatype: ${config.groupId}:${config.artifactId}:${config.version}")
