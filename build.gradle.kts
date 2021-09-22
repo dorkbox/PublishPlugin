@@ -26,7 +26,7 @@ plugins {
 
     id("com.dorkbox.Licensing") version "2.9.2"
     id("com.dorkbox.VersionUpdate") version "2.4"
-    id("com.dorkbox.GradleUtils") version "2.10"
+    id("com.dorkbox.GradleUtils") version "2.13"
 
     kotlin("jvm") version "1.5.21"
 }
