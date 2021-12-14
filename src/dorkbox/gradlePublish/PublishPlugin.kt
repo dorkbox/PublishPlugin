@@ -265,10 +265,7 @@ class PublishPlugin : Plugin<Project> {
                 // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin sourcesets have BOTH java + kotlin.
                 // we want to make sure to NOT have both, as it will screw up creating the jar!
                 try {
-                    val kotlin = (mainSourceSet as org.gradle.api.internal.HasConvention)
-                        .convention
-                        .getPlugin(KotlinSourceSet::class.java)
-                        .kotlin
+                    val kotlin = project.extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin
 
                     val srcDirs = kotlin.srcDirs
                     val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
