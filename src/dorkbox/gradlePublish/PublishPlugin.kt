@@ -21,16 +21,14 @@ import de.marcphilipp.gradle.nexus.NexusRepositoryContainer
 import io.codearte.gradle.nexus.CloseRepositoryTask
 import io.codearte.gradle.nexus.NexusStagingExtension
 import io.codearte.gradle.nexus.ReleaseRepositoryTask
-import org.gradle.api.Action
-import org.gradle.api.DomainObjectCollection
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import org.gradle.api.*
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.internal.impldep.org.bouncycastle.asn1.x500.style.RFC4519Style.description
 import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
@@ -55,6 +53,7 @@ class PublishPlugin : Plugin<Project> {
 
     private lateinit var project: Project
 
+    @Suppress("ObjectLiteralToLambda")
     override fun apply(project: Project) {
         this.project = project
 
@@ -140,12 +139,36 @@ class PublishPlugin : Plugin<Project> {
             }
         }
 
+        project.tasks.create("getSonatypeUrl").apply {
+            outputs.upToDateWhen { false }
+            outputs.cacheIf { false }
+
+            group = "publish and release"
+
+            this.doLast(object: Action<Task> {
+                override fun execute(task: Task) {
+                    val url = "https://oss.sonatype.org/content/repositories/releases/"
+                    val projectName = config.groupId.replace('.', '/')
+
+                    // output the release URL in the console
+                    println("\tSonatype URL: $url$projectName/${config.name}/${config.version}/")
+                }
+            })
+        }
+
         project.tasks.getByName("publishToMavenLocal").apply {
+            outputs.upToDateWhen { false }
+            outputs.cacheIf { false }
+
             group = "publish and release"
         }
 
-        project.tasks.create("publishToSonatypeAndRelease", PublishAndReleaseProjectTask::class.java).apply {
+        project.tasks.create("publishToSonatypeAndRelease").apply {
+            outputs.upToDateWhen { false }
+            outputs.cacheIf { false }
+
             group = "publish and release"
+            description = "Publish and Release this project to the Sonatype Maven repository"
 
             dependsOn("publishToMavenLocal", "publishToSonatype", "closeAndReleaseRepository")
         }
