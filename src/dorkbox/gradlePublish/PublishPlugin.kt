@@ -301,13 +301,12 @@ class PublishPlugin : Plugin<Project> {
                     }
 
                     from(kotlinFiles)
+
+                    // kotlin is always compiled first
+                    from(mainSourceSet.java)
                 } catch (ignored: Exception) {
                     // maybe we don't have kotlin for the project
                 }
-
-                // java stuff (it is compiled AFTER kotlin), and it is ALREADY included!
-                // kotlin is always compiled first
-                // from(mainSourceSet.java)
             }
 
 
