@@ -212,6 +212,9 @@ class PublishPlugin : Plugin<Project> {
         project.tasks.withType<PublishToMavenLocal> {
             doFirst {
                 println("\tPublishing '${publication.groupId}:${publication.artifactId}:${publication.version}' to Maven Local")
+                publication.artifacts.forEach {
+                    println("\t\t${it.file}")
+                }
             }
 
             onlyIf {
