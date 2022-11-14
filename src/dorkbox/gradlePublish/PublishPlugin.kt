@@ -106,22 +106,32 @@ class PublishPlugin : Plugin<Project> {
                             // we haven't configured it yet AND we don't know which value is set first!
 
                             // setup the sonatype PRIVATE KEY information
-                            assignFromProp("sonatypePrivateKeyFile", "") {
-                                project.extensions.extraProperties["sonatypePrivateKeyFile"] = it
+                            assignFromProp("sonatypePrivateKeyFile", "") { fileName ->
+                                project.extensions.extraProperties["sonatypePrivateKeyFile"] = fileName
 
                                 if (project.extensions.extraProperties.has("sonatypePrivateKeyPassword")) {
-                                    sign.apply {
-                                        useInMemoryPgpKeys(File(it).readText(), project.extensions.extraProperties["sonatypePrivateKeyPassword"] as String)
+                                    val password = project.extensions.extraProperties["sonatypePrivateKeyPassword"] as String
+                                    val fileText = File(fileName).readText()
+                                    if (fileText.isNotEmpty()) {
+                                        sign.apply {
+                                            useInMemoryPgpKeys(fileText, password)
+                                        }
                                     }
                                 }
                             }
 
-                            assignFromProp("sonatypePrivateKeyPassword", "") {
-                                project.extensions.extraProperties["sonatypePrivateKeyPassword"] = it
+                            assignFromProp("sonatypePrivateKeyPassword", "") { password ->
+                                project.extensions.extraProperties["sonatypePrivateKeyPassword"] = password
 
                                 if (project.extensions.extraProperties.has("sonatypePrivateKeyFile")) {
-                                    sign.apply {
-                                        useInMemoryPgpKeys(File(project.extensions.extraProperties["sonatypePrivateKeyFile"] as String).readText(), it)
+                                    val fileName = project.extensions.extraProperties["sonatypePrivateKeyFile"] as String
+                                    if (fileName.isNotEmpty()) {
+                                        val fileText = File(fileName).readText()
+                                        if (fileText.isNotEmpty()) {
+                                            sign.apply {
+                                                useInMemoryPgpKeys(fileText, password)
+                                            }
+                                        }
                                     }
                                 }
                             }
