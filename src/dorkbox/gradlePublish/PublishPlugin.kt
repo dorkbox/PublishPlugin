@@ -396,9 +396,9 @@ class PublishPlugin : Plugin<Project> {
     private fun assignFromProp(propertyName: String, defaultValue: String, apply: (value: String)->Unit) {
         // THREE possibilities for property registration or assignment
         // 1) we have MANUALLY defined this property (via the configuration object)
-        // 1) gradleUtil properties loaded first
+        // 2) gradleUtil properties loaded first
         //      -> gradleUtil's adds a function that everyone else (plugin/task) can call to get values from properties
-        // 2) gradleUtil properties loaded last
+        // 3) gradleUtil properties loaded last
         //      -> others add a function that gradleUtil's call to set values from properties
 
 
