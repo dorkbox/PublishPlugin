@@ -159,23 +159,23 @@ open class PublishToSonatype(val project: Project) {
 
     fun privateKey(config: PrivateKey.() -> Unit)  {
         pom().issueManagement {
-            val key = PrivateKey()
-            config(key)
+            val privateKey = PrivateKey()
+            config(privateKey)
 
             val sign = project.extensions.getByName("signing") as SigningExtension
             sign.apply {
-                useInMemoryPgpKeys(File(key.fileName).readText(), key.password)
+                useInMemoryPgpKeys(File(privateKey.fileName).readText(), privateKey.password)
             }
         }
     }
 
+
+    @Input val sonatype = Sonatype()
     fun sonatype(config: Sonatype.() -> Unit)  {
         config(sonatype)
     }
 
-    @Input val sonatype = Sonatype()
-
-    fun pub(): MavenPublication {
+   fun pub(): MavenPublication {
         return project.extensions.getByType(PublishingExtension::class.java).publications.maybeCreate("maven", MavenPublication::class.java)
     }
 
