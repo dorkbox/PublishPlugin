@@ -250,7 +250,10 @@ class PublishPlugin : Plugin<Project> {
             // create the sign task to sign the artifact jars before uploading
             val sign = project.extensions.getByName("signing") as SigningExtension
             sign.apply {
-                sign((project.extensions.getByName("publishing") as PublishingExtension).publications.getByName("maven"))
+                // only sign if we have something configured for signing!
+                if (project.extensions.extraProperties.has("sonatypePrivateKeyFile")) {
+                    sign((project.extensions.getByName("publishing") as PublishingExtension).publications.getByName("maven"))
+                }
             }
 
 
