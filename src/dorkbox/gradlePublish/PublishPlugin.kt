@@ -31,7 +31,6 @@ import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import java.io.File
 import java.time.Duration
 import java.time.Instant
@@ -294,7 +293,8 @@ class PublishPlugin : Plugin<Project> {
                                 val path = project.buildDir.relativeTo(it)
                                 path.path.isNotEmpty()
                             }
-                            file.relativeTo(base).path
+                            // there can be leading "../" (since it's relative. WE DO NOT WANT THAT!
+                            file.relativeTo(base).path.replace("../", "")
                         }
 
                         it.setExcludes(javaFiles)
