@@ -22,13 +22,14 @@ plugins {
     java
     `java-gradle-plugin`
 
-    id("com.gradle.plugin-publish") version "0.14.0"
+//    id("com.gradle.plugin-publish") version "0.14.0"
+    id("com.gradle.plugin-publish") version "1.1.0"
 
-    id("com.dorkbox.Licensing") version "2.9.2"
-    id("com.dorkbox.VersionUpdate") version "2.4"
-    id("com.dorkbox.GradleUtils") version "2.13"
+    id("com.dorkbox.GradleUtils") version "3.5"
+    id("com.dorkbox.Licensing") version "2.17"
+    id("com.dorkbox.VersionUpdate") version "2.5"
 
-    kotlin("jvm") version "1.5.21"
+    kotlin("jvm") version "1.7.0"
 }
 
 object Extras {
@@ -42,7 +43,7 @@ object Extras {
     const val id = "GradlePublish"
     const val vendor = "Dorkbox LLC"
     const val url = "https://git.dorkbox.com/dorkbox/GradlePublish"
-    val tags = listOf("gradle", "sonatype", "publish", "maven")
+    val tags = listOf("sonatype", "publish", "maven")
     val buildDate = Instant.now().toString()
 }
 
@@ -116,6 +117,9 @@ gradlePlugin {
         create("GradlePublish") {
             id = "${Extras.group}.${Extras.id}"
             implementationClass = "dorkbox.gradlePublish.PublishPlugin"
+            displayName = Extras.name
+            description = Extras.description
+            version = Extras.version
         }
     }
 }
@@ -123,14 +127,5 @@ gradlePlugin {
 pluginBundle {
     website = Extras.url
     vcsUrl = Extras.url
-
-    (plugins) {
-        "GradlePublish" {
-            id = "${Extras.group}.${Extras.id}"
-            displayName = Extras.name
-            description = Extras.description
-            tags = Extras.tags
-            version = Extras.version
-        }
-    }
+    tags = Extras.tags
 }
