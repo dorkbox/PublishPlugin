@@ -1,7 +1,7 @@
  - GradlePublish - Gradle Plugin to publish projects to the sonatype repository
    [The Apache Software License, Version 2.0]
    https://git.dorkbox.com/dorkbox/GradlePublish
-   Copyright 2022
+   Copyright 2023
      Dorkbox LLC
 
    Extra license information
@@ -16,12 +16,12 @@
      - Nexus Publish Plugin - Gradle Plugin that explicitly creates a Staging Repository before publishing to Nexus.
        [The Apache Software License, Version 2.0]
        https://github.com/marcphilipp/nexus-publish-plugin
-       Copyright 2022
+       Copyright 2023
          Marc Philipp
 
      - Gradle Nexus Staging plugin - A gradle plugin providing tasks to close and promote/release staged repositories.
        [The Apache Software License, Version 2.0]
        https://github.com/Codearte/gradle-nexus-staging-plugin
-       Copyright 2022
+       Copyright 2023
          Marcin Zajączkowski
          https://github.com/Codearte/gradle-nexus-staging-plugin/graphs/contributors
