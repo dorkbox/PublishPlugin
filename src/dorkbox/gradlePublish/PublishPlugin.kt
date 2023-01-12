@@ -26,8 +26,6 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
-import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
@@ -267,48 +265,6 @@ class PublishPlugin : Plugin<Project> {
                     sign((project.extensions.getByName("publishing") as PublishingExtension).publications.getByName("maven"))
                 }
             }
-
-
-            // fix the maven source jar
-            val sourceJarTask = project.tasks.findByName("sourceJar") as Jar
-            sourceJarTask.apply {
-                val sourceSets = project.extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
-                val mainSourceSet: SourceSet = sourceSets.getByName("main")
-
-                // want to included java + kotlin for the sources
-
-                // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin sourcesets have BOTH java + kotlin.
-                // we want to make sure to NOT have both, as it will screw up creating the jar!
-                try {
-                    val kotlin = project.extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin
-
-                    val srcDirs = kotlin.srcDirs
-                    val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
-                        // find out if this file (usually, just a java file) is ALSO in the java sourceset.
-                        // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
-                        val javaFiles = mainSourceSet.java.files.map { file ->
-                            // by definition, it MUST be one of these
-                            val base = srcDirs.first {
-                                // find out WHICH src dir base path it is
-                                val path = project.buildDir.relativeTo(it)
-                                path.path.isNotEmpty()
-                            }
-                            // there can be leading "../" (since it's relative. WE DO NOT WANT THAT!
-                            file.relativeTo(base).path.replace("../", "")
-                        }
-
-                        it.setExcludes(javaFiles)
-                    }
-
-                    from(kotlinFiles)
-
-                    // kotlin is always compiled first
-                    from(mainSourceSet.java)
-                } catch (ignored: Exception) {
-                    // maybe we don't have kotlin for the project
-                }
-            }
-
 
             // output how much the time-outs are
             val durationString = config.httpTimeout.toString().substring(2)
