@@ -136,7 +136,6 @@ class PublishPlugin : Plugin<Project> {
             // nothing in javadocs. sources is all we care about
             archiveClassifier.set("javadoc")
             mustRunAfter(project.tasks.getByName("jar"))
-            from("")
         }
 
         // this makes sure that we run this AFTER all the info in the project has been figured out, but before it's run (so we can still modify it)
