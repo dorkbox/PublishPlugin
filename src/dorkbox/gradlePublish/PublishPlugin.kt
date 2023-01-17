@@ -22,13 +22,18 @@ import io.codearte.gradle.nexus.CloseRepositoryTask
 import io.codearte.gradle.nexus.NexusStagingExtension
 import io.codearte.gradle.nexus.ReleaseRepositoryTask
 import org.gradle.api.*
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.File
 import java.time.Duration
 import java.time.Instant
@@ -50,12 +55,60 @@ class PublishPlugin : Plugin<Project> {
             // To fix maven+gradle moronic incompatibilities: https://github.com/gradle/gradle/issues/11308
             System.setProperty("org.gradle.internal.publish.checksums.insecure", "true")
         }
+
+        /**
+         * If the kotlin plugin is applied, and there is a compileKotlin task.. Then kotlin is enabled
+         * NOTE: This can ONLY be called from a task, it cannot be called globally!
+         */
+        fun hasKotlin(project: Project, debug: Boolean = false): Boolean {
+            try {
+                // check if plugin is available
+                project.plugins.findPlugin("org.jetbrains.kotlin.jvm") ?: return false
+
+                if (debug) println("\tHas kotlin plugin")
+
+                // this will check if the task exists, and throw an exception if it does not or return false
+                project.tasks.named("compileKotlin", KotlinCompile::class.java).orNull ?: return false
+
+                if (debug) println("\tHas compile kotlin task")
+
+                // check to see if we have any kotlin file
+                val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
+                val main = sourceSets.getByName("main")
+                val kotlin = project.extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin
+
+                if (debug) {
+                    println("\tmain dirs: ${main.java.srcDirs}")
+                    println("\tkotlin dirs: ${kotlin.srcDirs}")
+
+                    project.buildFile.parentFile.walkTopDown().filter { it.extension == "kt" }.forEach {
+                        println("\t\t$it")
+                    }
+                }
+
+                val files = main.java.srcDirs + kotlin.srcDirs
+                files.forEach { srcDir ->
+                    val kotlinFile = srcDir.walkTopDown().find { it.extension == "kt" }
+                    if (kotlinFile?.exists() == true) {
+                        if (debug) println("\t Has kotlin file: $kotlinFile")
+                        return true
+                    }
+                }
+            } catch (e: Exception) {
+                if (debug) e.printStackTrace()
+            }
+
+            return false
+        }
     }
 
     private lateinit var project: Project
 
     @Volatile
     private var hasMavenOutput = false
+
+    // this is lazy, because it MUST be run from a task!
+    private val hasKotlin: Boolean by lazy { hasKotlin(project) }
 
     @Suppress("ObjectLiteralToLambda")
     override fun apply(project: Project) {
@@ -70,6 +123,78 @@ class PublishPlugin : Plugin<Project> {
 
         // Create the Plugin extension object (for users to configure publishing).
         val config = project.extensions.create("publishToSonatype", PublishToSonatype::class.java, project)
+
+        val sourceJar = project.tasks.create("sourceJar", Jar::class.java).apply {
+            description = "Creates a JAR that contains the source code."
+            archiveClassifier.set("sources")
+            mustRunAfter(project.tasks.getByName("jar"))
+            duplicatesStrategy = DuplicatesStrategy.FAIL
+        }
+
+        val javaDocJar = project.tasks.create("javaDocJar", Jar::class.java).apply {
+            description = "Creates a JAR that contains the javadocs."
+            // nothing in javadocs. sources is all we care about
+            archiveClassifier.set("javadoc")
+            mustRunAfter(project.tasks.getByName("jar"))
+            from("")
+        }
+
+        // this makes sure that we run this AFTER all the info in the project has been figured out, but before it's run (so we can still modify it)
+        project.afterEvaluate {
+            project.tasks.getByName("sourceJar").apply {
+                val task = this as Jar
+//                println("Configuring jar sources: ${task.name}")
+
+                val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
+                val mainSourceSet: SourceSet = sourceSets.getByName("main")
+
+                if (hasKotlin) {
+//                    println("Kotlin sources: ${task.name}")
+                    // want to included java + kotlin for the sources
+
+                    // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin source-sets have BOTH java + kotlin.
+                    // we want to make sure to NOT have both, as it will screw up creating the jar!
+                    try {
+                        val kotlin = project.extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin
+
+                        val srcDirs = kotlin.srcDirs
+                        val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
+                            // find out if this file (usually, just a java file) is ALSO in the java source-set.
+                            // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
+                            val javaFiles = mainSourceSet.java.files.map { file ->
+                                // by definition, it MUST be one of these
+                                val base = srcDirs.first {
+                                    // find out WHICH src dir base path it is
+                                    val path = project.buildDir.relativeTo(it)
+                                    path.path.isNotEmpty()
+                                }
+                                // there can be leading "../" (since it's relative. WE DO NOT WANT THAT!
+                                val newFile = file.relativeTo(base).path.replace("../", "")
+//                                println("\t\tAdding: $newFile")
+                                newFile
+                            }
+
+                            it.setExcludes(javaFiles)
+                        }
+
+//                        kotlinFiles.forEach {
+//                            println("\t$it")
+//                        }
+
+                        task.from(kotlinFiles)
+                    } catch (ignored: Exception) {
+                        // maybe we don't have kotlin for the project
+                    }
+                }
+
+                // kotlin is always compiled first
+//                println("Java sources: ${task.name}")
+//                mainSourceSet.java.files.forEach {
+//                    println("\t$it")
+//                }
+                task.from(mainSourceSet.java)
+            }
+        }
 
         // specific configuration later in after evaluate!!
         nexusPublishing {
@@ -91,6 +216,7 @@ class PublishPlugin : Plugin<Project> {
                 val mavPub = pub.maybeCreate("maven", MavenPublication::class.java)
 
                 mavPub.from(project.components.getByName("java"))
+
                 // create the pom
                 mavPub.pom { pom ->
                     pom.organization {
@@ -140,16 +266,9 @@ class PublishPlugin : Plugin<Project> {
                     }
                 }
 
-                mavPub.artifact(project.tasks.create("sourceJar", Jar::class.java).apply {
-                    description = "Creates a JAR that contains the source code."
-                    archiveClassifier.set("sources")
-                })
+                mavPub.artifact(sourceJar)
 
-                mavPub.artifact(project.tasks.create("javaDocJar", Jar::class.java).apply {
-                    description = "Creates a JAR that contains the javadocs."
-                    // nothing special about javadocs. sources is all we care about
-                    archiveClassifier.set("javadoc")
-                })
+                mavPub.artifact(javaDocJar)
             }
         }
 
