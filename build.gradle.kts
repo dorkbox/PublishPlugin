@@ -22,12 +22,11 @@ plugins {
     java
     `java-gradle-plugin`
 
-//    id("com.gradle.plugin-publish") version "0.14.0"
     id("com.gradle.plugin-publish") version "1.1.0"
 
-    id("com.dorkbox.GradleUtils") version "3.5"
-    id("com.dorkbox.Licensing") version "2.17"
-    id("com.dorkbox.VersionUpdate") version "2.5"
+    id("com.dorkbox.GradleUtils") version "3.13"
+    id("com.dorkbox.Licensing") version "2.22"
+    id("com.dorkbox.VersionUpdate") version "2.7"
 
     kotlin("jvm") version "1.7.0"
 }
@@ -36,7 +35,7 @@ object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.17"
+    const val version = "1.18"
 
     // set as project.ext
     const val name = "Gradle Publish"
@@ -67,8 +66,9 @@ sourceSets {
         java {
             setSrcDirs(listOf("src"))
 
-            // want to include kotlin files for the source. 'setSrcDirs' resets includes...
-            include("**/*.kt")
+            // want to include kotlin and java files for the source. 'setSrcDirs' resets includes...
+            // NOTE: if we DO NOT do this, then there will not be any sources in the "plugin sources" jar, as it expects only java
+            include("**/*.kt", "**/*.java")
         }
     }
 }
@@ -113,19 +113,17 @@ tasks.jar.get().apply {
 ////////    Plugin Publishing + Release
 /////////////////////////////////
 gradlePlugin {
+    website.set(Extras.url)
+    vcsUrl.set(Extras.url)
+
     plugins {
         create("GradlePublish") {
             id = "${Extras.group}.${Extras.id}"
             implementationClass = "dorkbox.gradlePublish.PublishPlugin"
             displayName = Extras.name
             description = Extras.description
+            tags.set(Extras.tags)
             version = Extras.version
         }
     }
-}
-
-pluginBundle {
-    website = Extras.url
-    vcsUrl = Extras.url
-    tags = Extras.tags
 }
