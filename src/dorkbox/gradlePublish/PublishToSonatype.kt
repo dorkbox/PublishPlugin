@@ -20,9 +20,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Input
-import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
-import org.gradle.plugins.signing.signatory.internal.pgp.InMemoryPgpSignatoryProvider
 import java.io.File
 import java.time.Duration
 
@@ -51,6 +49,12 @@ class PrivateKey {
 }
 
 open class PublishToSonatype(val project: Project) {
+
+    /**
+     * If we want to push to the staging repository instead of the release one
+     */
+    @get:Input
+    var useStaging = false
 
     /**
      * How long the HTTP client will wait before timing out

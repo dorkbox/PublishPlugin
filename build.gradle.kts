@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.time.Instant
 
 gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS_FULL   // always show the stacktrace!
 gradle.startParameter.warningMode = WarningMode.All
@@ -22,13 +21,13 @@ plugins {
     java
     `java-gradle-plugin`
 
-    id("com.gradle.plugin-publish") version "1.1.0"
+    id("com.gradle.plugin-publish") version "1.2.1"
 
-    id("com.dorkbox.GradleUtils") version "3.13"
-    id("com.dorkbox.Licensing") version "2.22"
-    id("com.dorkbox.VersionUpdate") version "2.7"
+    id("com.dorkbox.GradleUtils") version "3.18"
+    id("com.dorkbox.Licensing") version "2.28"
+    id("com.dorkbox.VersionUpdate") version "2.8"
 
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.8.0"
 }
 
 object Extras {
@@ -43,7 +42,6 @@ object Extras {
     const val vendor = "Dorkbox LLC"
     const val url = "https://git.dorkbox.com/dorkbox/GradlePublish"
     val tags = listOf("sonatype", "publish", "maven")
-    val buildDate = Instant.now().toString()
 }
 
 ///////////////////////////////
@@ -84,13 +82,9 @@ dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
 
-    // publish on sonatype
-    // https://plugins.gradle.org/plugin/de.marcphilipp.nexus-publish
-    implementation("de.marcphilipp.gradle:nexus-publish-plugin:0.4.0")
-
-    // close and release on sonatype
-    // https://plugins.gradle.org/plugin/io.codearte.nexus-staging
-    implementation("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0")
+    // publish, close and release on sonatype
+    // https://github.com/gradle-nexus/publish-plugin/
+    implementation("io.github.gradle-nexus:publish-plugin:2.0.0-rc-1")
 }
 
 tasks.jar.get().apply {
@@ -103,7 +97,7 @@ tasks.jar.get().apply {
         attributes["Specification-Vendor"] = Extras.vendor
 
         attributes["Implementation-Title"] = "${Extras.group}.${Extras.id}"
-        attributes["Implementation-Version"] = Extras.buildDate
+        attributes["Implementation-Version"] = GradleUtils.now()
         attributes["Implementation-Vendor"] = Extras.vendor
     }
 }

@@ -15,12 +15,9 @@
  */
 package dorkbox.gradlePublish
 
-import de.marcphilipp.gradle.nexus.NexusPublishExtension
-import de.marcphilipp.gradle.nexus.NexusRepository
-import de.marcphilipp.gradle.nexus.NexusRepositoryContainer
-import io.codearte.gradle.nexus.CloseRepositoryTask
-import io.codearte.gradle.nexus.NexusStagingExtension
-import io.codearte.gradle.nexus.ReleaseRepositoryTask
+import io.github.gradlenexus.publishplugin.NexusPublishExtension
+import io.github.gradlenexus.publishplugin.NexusRepository
+import io.github.gradlenexus.publishplugin.NexusRepositoryContainer
 import org.gradle.api.*
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
@@ -118,8 +115,8 @@ class PublishPlugin : Plugin<Project> {
         apply("java")
         apply("maven-publish")
         apply("signing")
-        apply("de.marcphilipp.nexus-publish")
-        apply("io.codearte.nexus-staging")
+        apply("io.github.gradle-nexus.publish-plugin")
+
 
         // Create the Plugin extension object (for users to configure publishing).
         val config = project.extensions.create("publishToSonatype", PublishToSonatype::class.java, project)
@@ -136,63 +133,6 @@ class PublishPlugin : Plugin<Project> {
             // nothing in javadocs. sources is all we care about
             archiveClassifier.set("javadoc")
             mustRunAfter(project.tasks.getByName("jar"))
-        }
-
-        // this makes sure that we run this AFTER all the info in the project has been figured out, but before it's run (so we can still modify it)
-        project.afterEvaluate {
-            project.tasks.getByName("sourceJar").apply {
-                val task = this as Jar
-//                println("Configuring jar sources: ${task.name}")
-
-                val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
-                val mainSourceSet: SourceSet = sourceSets.getByName("main")
-
-                if (hasKotlin) {
-//                    println("Kotlin sources: ${task.name}")
-                    // want to included java + kotlin for the sources
-
-                    // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin source-sets have BOTH java + kotlin.
-                    // we want to make sure to NOT have both, as it will screw up creating the jar!
-                    try {
-                        val kotlin = project.extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin
-
-                        val srcDirs = kotlin.srcDirs
-                        val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
-                            // find out if this file (usually, just a java file) is ALSO in the java source-set.
-                            // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
-                            val javaFiles = mainSourceSet.java.files.map { file ->
-                                // by definition, it MUST be one of these
-                                val base = srcDirs.first {
-                                    // find out WHICH src dir base path it is
-                                    val path = project.buildDir.relativeTo(it)
-                                    path.path.isNotEmpty()
-                                }
-                                // there can be leading "../" (since it's relative. WE DO NOT WANT THAT!
-                                val newFile = file.relativeTo(base).path.replace("../", "")
-//                                println("\t\tAdding: $newFile")
-                                newFile
-                            }
-
-                            it.setExcludes(javaFiles)
-                        }
-
-//                        kotlinFiles.forEach {
-//                            println("\t$it")
-//                        }
-
-                        task.from(kotlinFiles)
-                    } catch (ignored: Exception) {
-                        // maybe we don't have kotlin for the project
-                    }
-                }
-
-                // kotlin is always compiled first
-//                println("Java sources: ${task.name}")
-//                mainSourceSet.java.files.forEach {
-//                    println("\t$it")
-//                }
-                task.from(mainSourceSet.java)
-            }
         }
 
         // specific configuration later in after evaluate!!
@@ -288,6 +228,7 @@ class PublishPlugin : Plugin<Project> {
             })
         }
 
+
         project.tasks.getByName("publishToMavenLocal").apply {
             outputs.upToDateWhen { false }
             outputs.cacheIf { false }
@@ -302,27 +243,10 @@ class PublishPlugin : Plugin<Project> {
             group = "publish and release"
             description = "Publish and Release this project to the Sonatype Maven repository"
 
-            dependsOn("publishToMavenLocal", "publishToSonatype", "closeAndReleaseRepository")
+            dependsOn("publishToMavenLocal", "publishToSonatype", "closeAndReleaseSonatypeStagingRepository")
         }
 
-        // (when the dependencies are there) we want to ALWAYS run maven local FIRST.
-        project.tasks.getByName("publishToSonatype").mustRunAfter(project.tasks.getByName("publishToMavenLocal"))
-        project.tasks.getByName("closeAndReleaseRepository").mustRunAfter(project.tasks.getByName("publishToSonatype"))
 
-
-        // only add files to the PRIMARY jar if we are deploying to maven
-        // this is a LITTLE HACKY, but we have to modify the task graph BEFORE the task graph is calculated...
-        val taskNames = project.gradle.startParameter.taskNames
-        hasMavenOutput = taskNames.contains("publishToMavenLocal") || taskNames.contains("publishToSonatypeAndRelease")
-
-        if (hasMavenOutput) {
-            project.tasks.getByName("jar").apply {
-                dependsOn("generatePomFileForMavenPublication")
-
-                outputs.upToDateWhen { false }
-                outputs.cacheIf { false }
-            }
-        }
 
         project.tasks.withType<PublishToMavenLocal> {
             doFirst {
@@ -358,22 +282,89 @@ class PublishPlugin : Plugin<Project> {
         // have to get the configuration extension data
         // required to make sure the tasks run in the correct order
         project.afterEvaluate {
-            nexusStaging {
-                assignFromProp("sonatypeUserName", config.sonatype.userName) { username = it }
-                assignFromProp("sonatypePassword", config.sonatype.password) { password = it }
+            // (when the dependencies are there) we want to ALWAYS run maven local FIRST.
+            project.tasks.getByName("publishToSonatype").mustRunAfter(project.tasks.getByName("publishToMavenLocal"))
+            project.tasks.getByName("closeAndReleaseSonatypeStagingRepository").mustRunAfter(project.tasks.getByName("publishToSonatype"))
+
+            // only add files to the PRIMARY jar if we are deploying to maven
+            // this is a LITTLE HACKY, but we have to modify the task graph BEFORE the task graph is calculated...
+            val taskNames = project.gradle.startParameter.taskNames
+            hasMavenOutput = taskNames.contains("publishToMavenLocal") || taskNames.contains("publishToSonatypeAndRelease")
+
+            if (hasMavenOutput) {
+                project.tasks.getByName("jar").apply {
+                    dependsOn("generatePomFileForMavenPublication")
+
+                    outputs.upToDateWhen { false }
+                    outputs.cacheIf { false }
+                }
             }
 
-            val closeTask = project.tasks.findByName("closeRepository") as CloseRepositoryTask
-            closeTask.apply {
-                delayBetweenRetriesInMillis = config.retryDelay.toMillis().toInt()
-                numberOfRetries = config.retryLimit
+
+            nexusPublishing {
+                useStaging.set(config.useStaging)
+
+                transitionCheckOptions {
+                    it.maxRetries.set(config.retryLimit)
+                    it.delayBetween.set(config.retryDelay)
+                }
             }
 
-            val releaseTask = project.tasks.findByName("releaseRepository") as ReleaseRepositoryTask
-            releaseTask.apply {
-                delayBetweenRetriesInMillis = config.retryDelay.toMillis().toInt()
-                numberOfRetries = config.retryLimit
+            // this makes sure that we run this AFTER all the info in the project has been figured out, but before it's run (so we can still modify it)
+            project.tasks.getByName("sourceJar").apply {
+                val task = this as Jar
+//                println("Configuring jar sources: ${task.name}")
+
+                val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
+                val mainSourceSet: SourceSet = sourceSets.getByName("main")
+
+                if (hasKotlin) {
+//                    println("Kotlin sources: ${task.name}")
+                    // want to included java + kotlin for the sources
+
+                    // kotlin stuff. Sometimes kotlin depends on java files, so the kotlin source-sets have BOTH java + kotlin.
+                    // we want to make sure to NOT have both, as it will screw up creating the jar!
+                    try {
+                        val kotlin = project.extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin
+
+                        val srcDirs = kotlin.srcDirs
+                        val kotlinFiles = kotlin.asFileTree.matching { it: PatternFilterable ->
+                            // find out if this file (usually, just a java file) is ALSO in the java source-set.
+                            // this is to prevent DUPLICATES in the jar, because sometimes kotlin must be .kt + .java in order to compile!
+                            val javaFiles = mainSourceSet.java.files.map { file ->
+                                // by definition, it MUST be one of these
+                                val base = srcDirs.first {
+                                    // find out WHICH src dir base path it is
+                                    val path = project.layout.buildDirectory.locationOnly.get().asFile.relativeTo(it)
+                                    path.path.isNotEmpty()
+                                }
+                                // there can be leading "../" (since it's relative. WE DO NOT WANT THAT!
+                                val newFile = file.relativeTo(base).path.replace("../", "")
+//                                println("\t\tAdding: $newFile")
+                                newFile
+                            }
+
+                            it.setExcludes(javaFiles)
+                        }
+
+//                        kotlinFiles.forEach {
+//                            println("\t$it")
+//                        }
+
+                        task.from(kotlinFiles)
+                    } catch (ignored: Exception) {
+                        // maybe we don't have kotlin for the project
+                    }
+                }
+
+                // kotlin is always compiled first
+//                println("Java sources: ${task.name}")
+//                mainSourceSet.java.files.forEach {
+//                    println("\t$it")
+//                }
+                task.from(mainSourceSet.java)
             }
+
 
             // create the sign task to sign the artifact jars before uploading
             val sign = project.extensions.getByName("signing") as SigningExtension
@@ -450,7 +441,6 @@ class PublishPlugin : Plugin<Project> {
     private inline fun <reified S : Any> DomainObjectCollection<in S>.withType(noinline configuration: S.() -> Unit) =
             withType(S::class.java, configuration)
 
-    @Suppress("UNCHECKED_CAST")
     private fun get() : PublishingExtension {
         return project.extensions.getByName("publishing") as PublishingExtension
     }
@@ -458,14 +448,11 @@ class PublishPlugin : Plugin<Project> {
     private fun publishing(configure: PublishingExtension.() -> Unit): Unit =
             project.extensions.configure("publishing", configure)
 
-    private fun nexusStaging(configure: NexusStagingExtension.() -> Unit): Unit =
-            project.extensions.configure("nexusStaging", configure)
-
     private fun nexusPublishing(configure: NexusPublishExtension.() -> Unit): Unit =
             project.extensions.configure("nexusPublishing", configure)
 
 
-    @Suppress("UNCHECKED_CAST", "RemoveExplicitTypeArguments")
+    @Suppress("UNCHECKED_CAST")
     private fun assignFromProp(propertyName: String, defaultValue: String, apply: (value: String)->Unit) {
         // THREE possibilities for property registration or assignment
         // 1) we have MANUALLY defined this property (via the configuration object)
