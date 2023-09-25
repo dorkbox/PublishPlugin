@@ -51,12 +51,6 @@ class PrivateKey {
 open class PublishToSonatype(val project: Project) {
 
     /**
-     * If we want to push to the staging repository instead of the release one
-     */
-    @get:Input
-    var useStaging = false
-
-    /**
      * How long the HTTP client will wait before timing out
      */
     @get:Input

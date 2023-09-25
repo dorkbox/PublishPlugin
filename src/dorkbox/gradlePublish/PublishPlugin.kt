@@ -302,7 +302,7 @@ class PublishPlugin : Plugin<Project> {
 
 
             nexusPublishing {
-                useStaging.set(config.useStaging)
+                useStaging.set(true)
 
                 transitionCheckOptions {
                     it.maxRetries.set(config.retryLimit)
