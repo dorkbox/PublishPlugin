@@ -34,7 +34,7 @@ object Extras {
     // set for the project
     const val description = "Gradle Plugin to publish projects to the sonatype repository"
     const val group = "com.dorkbox"
-    const val version = "1.20"
+    const val version = "1.21"
 
     // set as project.ext
     const val name = "Gradle Publish"
