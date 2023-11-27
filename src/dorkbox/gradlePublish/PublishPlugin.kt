@@ -253,13 +253,13 @@ class PublishPlugin : Plugin<Project> {
                 // prune off the "file:"
                 val localMavenRepo = project.repositories.mavenLocal().url.toString().replaceFirst("file:", "")
 
-                // clean-out the repo!!
-                File(localMavenRepo).deleteRecursively()
-
                 val projectName = config.groupId.replace('.', '/')
 
                 // output the release URL in the console
                 val mavenLocation = "$localMavenRepo$projectName/${config.name}/${config.version}/"
+
+                // clean-out the repo!!
+                File(mavenLocation).deleteRecursively()
 
                 println("\tPublishing '${publication.groupId}:${publication.artifactId}:${publication.version}' to Maven Local")
 
