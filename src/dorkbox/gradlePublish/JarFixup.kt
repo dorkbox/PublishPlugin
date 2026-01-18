@@ -13,3 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package dorkbox.gradlePublish
+
+import org.gradle.api.Project
+import org.gradle.jvm.tasks.Jar
+
+object JarFixup {
+    fun Project.fixupJar() {
+        // this makes sure that we run this AFTER all the info in the project has been figured out, but before it's run (so we can still modify it)
+        tasks.getByName("jar").apply {
+            this as Jar
+
+            isPreserveFileTimestamps = true
+            isReproducibleFileOrder = true
+        }
+    }
+}

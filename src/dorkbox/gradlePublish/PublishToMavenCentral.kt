@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Input
+import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
 import java.io.File
 import java.time.Duration
@@ -48,7 +50,17 @@ class PrivateKey {
     @Input var password = ""
 }
 
-open class PublishToSonatype(val project: Project) {
+open class PublishToMavenCentral(val project: Project) {
+
+    @get:Input
+    var enableDokka = false
+        set(value) {
+            field = value
+            pub {
+                enableDokka = value
+            }
+        }
+
 
     /**
      * How long the HTTP client will wait before timing out
@@ -72,45 +84,57 @@ open class PublishToSonatype(val project: Project) {
     var groupId = ""
         set(value) {
             field = value
-            pub().groupId = value
+            pub {
+                groupId = value
+            }
         }
 
     @get:Input
     var artifactId = ""
         set(value) {
             field = value
-            pub().artifactId = value
+            pub {
+                artifactId = value
+            }
         }
 
     @get:Input
     var version = ""
         set(value) {
             field = value
-            pub().version = value
+            pub {
+                version = value
+            }
         }
 
     @get:Input
     var name = ""
         set(value) {
             field = value
-            pom().name.set(value)
+            pom {
+                name.set(value)
+            }
         }
 
     @get:Input
     var description = ""
         set(value) {
             field = value
-            pom().description.set(value)
+            pom {
+                description.set(value)
+            }
         }
 
     @get:Input
     var url = ""
         set(value) {
             field = value
-            pom().url.set(value)
-            pom().scm {
-                it.url.set(value)
-                it.connection.set("scm:${value}.git")
+            pom {
+                url.set(value)
+                scm {
+                    it.url.set(value)
+                    it.connection.set("scm:git:${value}.git")
+                }
             }
         }
 
@@ -118,8 +142,10 @@ open class PublishToSonatype(val project: Project) {
     var vendor = ""
         set(value) {
             field = value
-            pom().organization {
-                it.name.set(value)
+            pom {
+                organization {
+                    it.name.set(value)
+                }
             }
         }
 
@@ -127,42 +153,50 @@ open class PublishToSonatype(val project: Project) {
     var vendorUrl = ""
         set(value) {
             field = value
-            pom().organization {
-                it.url.set(value)
+            pom {
+                organization {
+                    it.url.set(value)
+                }
             }
         }
 
     fun developer(config: Developer.() -> Unit)  {
-        pom().developers {
-            it.developer { dev ->
-                val developer = Developer()
-                config(developer)
+        pom {
+            developers {
+                it.developer { dev ->
+                    val developer = Developer()
+                    config(developer)
 
-                dev.id.set(developer.id)
-                dev.name.set(developer.name)
-                dev.email.set(developer.email)
+                    dev.id.set(developer.id)
+                    dev.name.set(developer.name)
+                    dev.email.set(developer.email)
+                }
             }
         }
     }
 
     fun issueManagement(config: IssueManagement.() -> Unit)  {
-        pom().issueManagement {
-            val issueMgmt = IssueManagement()
-            config(issueMgmt)
+        pom {
+            issueManagement {
+                val issueMgmt = IssueManagement()
+                config(issueMgmt)
 
-            it.system.set(issueMgmt.nickname)
-            it.url.set(issueMgmt.url)
+                it.system.set(issueMgmt.nickname)
+                it.url.set(issueMgmt.url)
+            }
         }
     }
 
     fun privateKey(config: PrivateKey.() -> Unit)  {
-        pom().issueManagement {
-            val privateKey = PrivateKey()
-            config(privateKey)
+        pom {
+            issueManagement {
+                val privateKey = PrivateKey()
+                config(privateKey)
 
-            val sign = project.extensions.getByName("signing") as SigningExtension
-            sign.apply {
-                useInMemoryPgpKeys(File(privateKey.fileName).readText(), privateKey.password)
+                val sign = project.extensions.getByName("signing") as SigningExtension
+                sign.apply {
+                    useInMemoryPgpKeys(File(privateKey.fileName).readText(), privateKey.password)
+                }
             }
         }
     }
@@ -173,11 +207,19 @@ open class PublishToSonatype(val project: Project) {
         config(sonatype)
     }
 
-   fun pub(): MavenPublication {
-        return project.extensions.getByType(PublishingExtension::class.java).publications.maybeCreate("maven", MavenPublication::class.java)
+   fun pub(config: MavenPublication.() -> Unit) {
+       project.configure<PublishingExtension> {
+           publications
+               .withType<MavenPublication>()
+               .all { publication ->
+                   config(publication)
+               }
+       }
     }
 
-    fun pom(): MavenPom {
-        return pub().pom!!
+    fun pom(config: MavenPom.() -> Unit) {
+        pub {
+            pom(config)
+        }
     }
 }

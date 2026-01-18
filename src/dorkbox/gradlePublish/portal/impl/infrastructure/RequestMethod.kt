@@ -13,3 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package dorkbox.gradlePublish.portal.impl.infrastructure
+
+/**
+ * Provides enumerated HTTP verbs
+ */
+enum class RequestMethod {
+    GET, DELETE, HEAD, OPTIONS, PATCH, POST, PUT
+}

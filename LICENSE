@@ -1,7 +1,7 @@
  - GradlePublish - Gradle Plugin to publish projects to the sonatype repository
    [The Apache Software License, Version 2.0]
    https://git.dorkbox.com/dorkbox/GradlePublish
-   Copyright 2023
+   Copyright 2026
      Dorkbox LLC
 
    Extra license information
@@ -13,9 +13,22 @@
        Kotlin Compiler, Test Data+Libraries, and Tools repository contain third-party code, to which different licenses may apply
        See: https://github.com/JetBrains/kotlin/blob/master/license/README.md
 
-     - Gradle Nexus Publish Plugin - Gradle Plugin for publishing to Nexus that automates creating, closing, and releasing staging repositories
+     - kotlinx.coroutines - Library support for Kotlin coroutines with multiplatform support
        [The Apache Software License, Version 2.0]
-       https://github.com/gradle-nexus/publish-plugin
-       Copyright 2023
-         Marc Philipp
-         Marcin Zajączkowski
+       https://github.com/Kotlin/kotlinx.coroutines
+       Copyright 2026
+         JetBrains s.r.o.
+
+     - KTOR - Framework for quickly creating connected applications in Kotlin
+       [The Apache Software License, Version 2.0]
+       https://github.com/ktorio/ktor
+       Copyright 2026
+         JetBrains s.r.o.
+
+
+ - GradlePublish - Code used from https://github.com/DanySK
+   [The Apache Software License, Version 2.0]
+   https://github.com/DanySK/publish-on-central
+   https://github.com/DanySK/maven-central-portal-kotlin-api
+   Copyright 2026
+     Danilo Pianini
