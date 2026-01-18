@@ -114,7 +114,7 @@ data class PublishPortalDeployment(
     private suspend fun deploymentStatus(): DeploymentResponseFiles {
         val response = client.apiV1PublisherStatusPost(deploymentId)
 
-        project.logger.lifecycle("Deployment status: " + response.body())
+        println("\tDeployment status: " + response.body())
         val body =
             when (response.status) {
                 OK -> response.typedBody<DeploymentResponseFiles>(typeInfo<DeploymentResponseFiles>())
@@ -142,7 +142,7 @@ data class PublishPortalDeployment(
 
             VALIDATED,
             PUBLISHING,
-            PUBLISHED   -> project.logger.lifecycle("Deployment {} validated", deploymentId)
+            PUBLISHED   -> println("\tDeployment $deploymentId validated")
 
             FAILED      -> error("Deployment $deploymentId validation FAILED: $responseBody")
 
@@ -164,18 +164,16 @@ data class PublishPortalDeployment(
                 release(waitAmongRetries * 2)
             }
 
-            PUBLISHED  ->
-                project.logger.lifecycle("Deployment {} has been already released", deploymentId)
+            PUBLISHED  -> println("\tDeployment $deploymentId has been already released", )
 
             VALIDATED  -> {
                 println("\tReleasing deployment $deploymentId")
 
                 val releaseResponse = client.apiV1PublisherDeploymentDeploymentIdPost(deploymentId)
                 when (releaseResponse.status) {
-                    NO_CONTENT -> project.logger.lifecycle("Deployment {} released", deploymentId)
+                    NO_CONTENT -> println("\tDeployment $deploymentId released", )
                     NOT_FOUND -> error("Deployment $deploymentId not found. $releaseResponse")
-                    INTERNAL_SERVER_ERROR ->
-                        error("Internal server error when releasing $deploymentId: $releaseResponse")
+                    INTERNAL_SERVER_ERROR -> error("Internal server error when releasing $deploymentId: $releaseResponse")
                     else -> maybeUnauthorized("deployment release", releaseResponse)
                 }
             }
@@ -196,8 +194,7 @@ data class PublishPortalDeployment(
                 drop(waitAmongRetries * 2)
             }
 
-            PUBLISHED  ->
-                error("Deployment $deploymentId has been published already and cannot get dropped")
+            PUBLISHED  -> error("Deployment $deploymentId has been published already and cannot get dropped")
 
             FAILED,
             VALIDATED  -> {
@@ -205,10 +202,9 @@ data class PublishPortalDeployment(
 
                 val releaseResponse = client.apiV1PublisherDeploymentDeploymentIdDelete(deploymentId)
                 when (releaseResponse.status) {
-                    NO_CONTENT -> project.logger.lifecycle("Deployment {} dropped", deploymentId)
+                    NO_CONTENT -> println("\tDeployment $deploymentId dropped", )
                     NOT_FOUND -> error("Deployment $deploymentId not found. $releaseResponse")
-                    INTERNAL_SERVER_ERROR ->
-                        error("Internal server error when dropping $deploymentId: $releaseResponse")
+                    INTERNAL_SERVER_ERROR -> error("Internal server error when dropping $deploymentId: $releaseResponse")
                     else -> maybeUnauthorized("deployment release", releaseResponse)
                 }
             }
