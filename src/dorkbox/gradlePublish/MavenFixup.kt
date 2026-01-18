@@ -191,6 +191,7 @@ object MavenFixup {
                 archiveBaseName.set(project.name)
 
                 destinationDirectory.set(project.layout.buildDirectory.dir(PUBLICATION_NAME_LOWER))
+                dependsOn("clean")
                 dependsOn(project.tasks.withType<PublishToMavenRepository>())
                 dependsOn(project.tasks.withType<PublishToMavenLocal>())
             }
