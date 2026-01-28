@@ -23,7 +23,7 @@ plugins {
 
     id("com.gradle.plugin-publish") version "2.0.0"
 
-    id("com.dorkbox.GradleUtils") version "4.0"
+    id("com.dorkbox.GradleUtils") version "4.4"
     id("com.dorkbox.Licensing") version "3.1"
     id("com.dorkbox.VersionUpdate") version "3.0"
 
@@ -50,7 +50,7 @@ object Extras {
 ///////////////////////////////
 GradleUtils.load("$projectDir/../../gradle.properties", Extras)
 GradleUtils.defaults()
-GradleUtils.compileConfiguration(JavaVersion.VERSION_17)
+GradleUtils.compileConfiguration(JavaVersion.VERSION_25)
 
 licensing {
     license(License.APACHE_2) {
@@ -71,7 +71,7 @@ repositories {
 }
 
 dependencies {
-    val ktorVersion = "3.3.3"
+    val ktorVersion = "3.4.0"
 
     // the kotlin version is taken from the plugin, so it is not necessary to set it here
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin")
@@ -84,7 +84,7 @@ dependencies {
     implementation(gradleKotlinDsl())
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
     implementation("io.ktor:ktor-client-core:${ktorVersion}")
     implementation("io.ktor:ktor-client-cio:${ktorVersion}")
