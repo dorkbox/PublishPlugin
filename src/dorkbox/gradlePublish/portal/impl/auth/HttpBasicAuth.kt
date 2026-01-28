@@ -16,7 +16,7 @@
 
 package dorkbox.gradlePublish.portal.impl.auth
 
-import io.ktor.util.*
+import kotlin.io.encoding.Base64
 
 class HttpBasicAuth : Authentication {
     var username: String? = null
@@ -25,7 +25,7 @@ class HttpBasicAuth : Authentication {
     override fun apply(query: MutableMap<String, List<String>>, headers: MutableMap<String, String>) {
         if (username == null && password == null) return
         val str = (username ?: "") + ":" + (password ?: "")
-        val auth = str.encodeBase64()
+        val auth = Base64.encode(str.toByteArray())
         headers["Authorization"] = "Basic $auth"
     }
 }
