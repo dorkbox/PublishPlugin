@@ -102,13 +102,10 @@ class PublishPlugin : Plugin<Project> {
         }
     }
 
-    private lateinit var project: Project
-
     override fun apply(project: Project) {
-        this.project = project
 
         // https://discuss.gradle.org/t/can-a-plugin-itself-add-buildscript-dependencies-and-then-apply-a-plugin/25039/4
-        apply("java")
+        project.apply("java")
         project.plugins.apply(MavenPublishPlugin::class.java)
         project.plugins.apply(SigningPlugin::class.java)
 
@@ -221,13 +218,13 @@ class PublishPlugin : Plugin<Project> {
 
     // required to make sure the plugins are correctly applied. ONLY applying it to the project WILL NOT work.
     // The plugin must also be applied to the root project
-    private fun apply(id: String) {
-        if (project.rootProject.pluginManager.findPlugin(id) == null) {
-            project.rootProject.pluginManager.apply(id)
+    private fun Project.apply(id: String) {
+        if (rootProject.pluginManager.findPlugin(id) == null) {
+            rootProject.pluginManager.apply(id)
         }
 
-        if (project.pluginManager.findPlugin(id) == null) {
-            project.pluginManager.apply(id)
+        if (pluginManager.findPlugin(id) == null) {
+            pluginManager.apply(id)
         }
     }
 
