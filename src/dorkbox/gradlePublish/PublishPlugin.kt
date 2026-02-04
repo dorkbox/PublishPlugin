@@ -16,6 +16,7 @@
 package dorkbox.gradlePublish
 
 
+import dorkbox.gradle.StaticMethodsAndTools
 import dorkbox.gradlePublish.JarFixup.fixupJar
 import dorkbox.gradlePublish.JavaDocFixup.fixJavadocJar
 import dorkbox.gradlePublish.LicenseFilesFixup.fixupLicenseFiles
@@ -53,11 +54,6 @@ class PublishPlugin : Plugin<Project> {
         const val PUBLICATION_NAME_LOWER = "maven-central"
 
         val DTF: DateTimeFormatter = DateTimeFormatter.ofPattern("E MMM HH:mm:ss 'UTC' yyyy").withZone(ZoneOffset.UTC)
-
-        init {
-            // To fix maven+gradle moronic incompatibilities: https://github.com/gradle/gradle/issues/11308
-            System.setProperty("org.gradle.internal.publish.checksums.insecure", "true")
-        }
 
         @Suppress("UNCHECKED_CAST", "SameParameterValue")
         fun Project.assignFromProp(propertyName: String, defaultValue: String, apply: (value: String)->Unit) {
