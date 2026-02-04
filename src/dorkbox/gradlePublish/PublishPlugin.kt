@@ -209,7 +209,7 @@ class PublishPlugin : Plugin<Project> {
 
                     // automatically configure mavenCentral
                     config.apply {
-                        println("\tAutomatically configuring MavenCentral plugin")
+                        println("\tAutomatic configuration of MavenCentral plugin")
                         groupId = data.group
                         artifactId = data.id
                         version = data.version
