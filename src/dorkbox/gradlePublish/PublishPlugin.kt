@@ -205,6 +205,41 @@ class PublishPlugin : Plugin<Project> {
             }
         }
 
+        // Defer logic that depends on project state
+        project.afterEvaluate {
+            if (!config.configured) {
+                project.plugins.findPlugin("com.dorkbox.GradleUtils")?.let { plugin ->
+                    val data = project.extensions.getByType(StaticMethodsAndTools::class.java).data
+
+                    // automatically configure mavenCentral
+                    config.apply {
+                        println("\tAutomatically configuring MavenCentral plugin")
+                        groupId = data.group
+                        artifactId = data.id
+                        version = data.version
+
+                        name = data.name
+                        description = data.description
+                        url = data.url
+
+                        vendor = data.vendor
+                        vendorUrl = data.vendorUrl
+
+                        issueManagement {
+                            url = data.issueManagement.url
+                            nickname = data.issueManagement.nickname
+                        }
+
+                        developer {
+                            id = data.developer.id
+                            name = data.developer.name
+                            email = data.developer.email
+                        }
+                    }
+                }
+            }
+        }
+
         val repoToConfigure = Repository.projectLocalRepository(project)
 
 

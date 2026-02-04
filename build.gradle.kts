@@ -97,14 +97,7 @@ tasks.jar.get().apply {
         // https://docs.oracle.com/javase/tutorial/deployment/jar/packageman.html
         attributes["Name"] = Extras.name
 
-        attributes["Specification-Title"] = Extras.name
-        attributes["Specification-Version"] = Extras.version
-        attributes["Specification-Vendor"] = Extras.vendor
-
-        attributes["Implementation-Title"] = "${Extras.group}.${Extras.id}"
-        attributes["Implementation-Version"] = GradleUtils.now()
-        attributes["Implementation-Vendor"] = Extras.vendor
-    }
+    implementation("com.dorkbox.GradleUtils:com.dorkbox.GradleUtils.gradle.plugin:4.8")
 }
 
 

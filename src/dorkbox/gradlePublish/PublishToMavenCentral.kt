@@ -20,6 +20,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
@@ -51,6 +52,9 @@ class PrivateKey {
 }
 
 open class PublishToMavenCentral(val project: Project) {
+
+    @Internal
+    var configured = false
 
     @get:Input
     var enableDokka = false
@@ -207,19 +211,20 @@ open class PublishToMavenCentral(val project: Project) {
         config(sonatype)
     }
 
-   fun pub(config: MavenPublication.() -> Unit) {
-       project.configure<PublishingExtension> {
-           publications
-               .withType<MavenPublication>()
-               .all { publication ->
-                   config(publication)
-               }
-       }
-    }
-
     fun pom(config: MavenPom.() -> Unit) {
         pub {
             pom(config)
+        }
+    }
+
+    fun pub(config: MavenPublication.() -> Unit) {
+        configured = true
+        project.configure<PublishingExtension> {
+            publications
+                .withType<MavenPublication>()
+                .all { publication ->
+                    config(publication)
+                }
         }
     }
 }
