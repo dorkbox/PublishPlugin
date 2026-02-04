@@ -23,32 +23,26 @@ plugins {
 
     id("com.gradle.plugin-publish") version "2.0.0"
 
-    id("com.dorkbox.GradleUtils") version "4.4"
+    id("com.dorkbox.GradleUtils") version "4.8"
     id("com.dorkbox.Licensing") version "3.1"
-    id("com.dorkbox.VersionUpdate") version "3.0"
+    id("com.dorkbox.VersionUpdate") version "3.1"
 
     kotlin("jvm") version "2.3.0"
     kotlin("plugin.serialization") version "2.3.0"
 }
 
-object Extras {
-    // set for the project
-    const val description = "Gradle Plugin to publish projects to the sonatype repository"
-    const val group = "com.dorkbox"
-    const val version = "2.0"
-
-    // set as project.ext
-    const val name = "Gradle Publish"
-    const val id = "GradlePublish"
-    const val vendor = "Dorkbox LLC"
-    const val url = "https://git.dorkbox.com/dorkbox/GradlePublish"
-    val tags = listOf("sonatype", "publish", "maven")
-}
-
 ///////////////////////////////
 /////  assign 'Extras'
 ///////////////////////////////
-GradleUtils.load("$projectDir/../../gradle.properties", Extras)
+GradleUtils.load {
+    group = "com.dorkbox"
+    id = "GradlePublish"
+    description = "Gradle Plugin to publish projects to the sonatype repository"
+    name = "Gradle Publish"
+    version = "2.0.1"
+    vendor = "Dorkbox LLC"
+    url = "https://git.dorkbox.com/dorkbox/GradlePublish"
+}
 GradleUtils.defaults()
 GradleUtils.compileConfiguration(JavaVersion.VERSION_25)
 
@@ -90,12 +84,6 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:${ktorVersion}")
     implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
     implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
-}
-
-tasks.jar.get().apply {
-    manifest {
-        // https://docs.oracle.com/javase/tutorial/deployment/jar/packageman.html
-        attributes["Name"] = Extras.name
 
     implementation("com.dorkbox.GradleUtils:com.dorkbox.GradleUtils.gradle.plugin:4.8")
 }
@@ -110,12 +98,12 @@ gradlePlugin {
 
     plugins {
         register("GradlePublish") {
-            id = "${Extras.group}.${Extras.id}"
+            id = Extras.groupAndId
             implementationClass = "dorkbox.gradlePublish.PublishPlugin"
             displayName = Extras.name
             description = Extras.description
-            tags.set(Extras.tags)
             version = Extras.version
+            tags.set(listOf("sonatype", "publish", "maven"))
         }
     }
 }
