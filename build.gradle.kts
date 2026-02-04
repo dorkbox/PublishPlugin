@@ -39,7 +39,7 @@ GradleUtils.load {
     id = "GradlePublish"
     description = "Gradle Plugin to publish projects to the sonatype repository"
     name = "Gradle Publish"
-    version = "2.0.1"
+    version = "2.1"
     vendor = "Dorkbox LLC"
     url = "https://git.dorkbox.com/dorkbox/GradlePublish"
 }
