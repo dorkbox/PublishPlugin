@@ -89,7 +89,7 @@ object MavenFixup {
 
                 if (projectName.isNotBlank()) {
                     // output the release URL in the console
-                    println("\tMaven Central URL: $url$projectName/${config.name}/${config.version}/")
+                    println("\tMaven Central URL: $url/$projectName/${config.name}/${config.version}/")
                 } else {
                     println("\tCannot display Maven Central URL, project details are not configured.")
                 }
